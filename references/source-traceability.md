@@ -35,7 +35,7 @@ This adaptation records transferable rule meaning, selected subconditions, and r
 - Replace the aerospace warning/caution taxonomy with the applicable project or domain taxonomy.
 - Apply a light profile to selected technical conversations rather than controlled-document formality.
 - Use minimum intervention for revisions and leave already-clear text unchanged.
-- Delete code comments that only narrate adjacent code instead of polishing the narration.
+- Apply the code-related prose profile to comment removal. Never remove an untargeted comment or polish narration into shorter narration.
 
 ## Official source
 

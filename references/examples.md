@@ -183,7 +183,7 @@ Unsafe revision:
 
 Accurate revision:
 
-> The trace shows that the expired certificate caused the failed connection. The same request succeeded after the previous certificate was restored.
+> The trace shows that the service loaded an expired certificate. The same request succeeded after the previous certificate was restored. The expired certificate caused the failed connection.
 
 Preserve supporting and corroborating observations. A verified conclusion does not make its evidence repetitive.
 

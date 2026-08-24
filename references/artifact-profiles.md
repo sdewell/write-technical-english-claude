@@ -40,7 +40,8 @@ profile or create a new top-level artifact type.
 - Selecting this modifier authorizes those omissions from the public output under
   the semantic claim inventory. Preserve the technical claims needed to understand
   the public behavior.
-- Remove credentials and secret values from public output without exception. Remove
+- Redact credentials and secret values from public output without exception. Use a
+  non-sensitive marker when the surrounding text requires a visible redaction. Remove
   personal identifiers, private URLs, and local user paths unless the public output
   requires them and the user authorizes their disclosure. Report an omission when it
   changes a technical claim.
@@ -125,10 +126,11 @@ Use this profile for comments, docstrings, diagnostics, help text, commit or rel
   or edit history.
 - Prefer the reason or invariant over a line-by-line restatement of obvious code.
 - Preserve existing comments by default. Never remove a suppression, tool directive,
-  compliance tag, security or safety assumption, or required test rationale.
+  compliance tag, security or safety assumption, required test rationale, generated
+  documentation input, or other comment that repository controls consume, including
+  a comment referenced by a machine-parseable build, test, or documentation manifest.
 - Remove a comment that only narrates adjacent code or duplicates a clear test name
-  only when the user targets that comment and repository controls show that it is not
-  behavior-bearing. Do not polish it into shorter narration.
+  only when the user targets that comment. Do not polish it into shorter narration.
 - Split the surrounding prose when an exact name makes a sentence long.
 
 Completion check: The prose is clearer, and every executable or externally defined token remains unchanged.

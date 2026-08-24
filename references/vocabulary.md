@@ -32,7 +32,7 @@ Before replacing a word:
 | A direct precise verb        | Generic `perform`                    | Use the established operation, such as `compile`, `deploy`, or `validate`.            |
 | `but`                        | `however`                            | Keep quoted or externally controlled text.                                            |
 | `primary`                    | `main` as a generic adjective        | Preserve `main` in branch names, entry points, functions, and official terms.         |
-| `can`                        | `may` for possibility                | Preserve source `may` when it carries possibility, uncertainty, permission, or normative force. |
+| `can` for capability         | `may` for capability                 | Preserve source `may` when it carries possibility, uncertainty, permission, or normative force. |
 | `part`                       | `portion`                            | Keep a defined domain distinction.                                                    |
 | `because`                    | Causal `since`                       | Keep `since` for time.                                                                |
 | `thus` or `as a result`      | `therefore`                          | Select the connector that states the real relationship.                               |
@@ -49,7 +49,7 @@ Before replacing a word:
 - Use `must` for an unconditional requirement when no governing standard defines another convention.
 - Preserve `MUST`, `SHOULD`, and `MAY` when an applicable standard defines their force.
 - Keep `required` and `necessary` only when they express the intended obligation.
-- Use `can` for capability or possibility.
+- Use `can` for capability. Preserve source `may` when it carries possibility, uncertainty, permission, or normative force.
 - Use `may` for ordinary permission only when the context cannot give it normative force. Otherwise, use the governing keyword or state that the action is permitted.
 - Do not add `must` before an imperative command merely for emphasis.
 
