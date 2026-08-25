@@ -1,0 +1,6 @@
+# LEARNINGS corpus = companion journal maintained by background hooks, not
+# the running codebase. Marked generated (collapses PR diffs, drops from
+# language stats) + union-merge (concurrent/rebase edits auto-resolve).
+# Managed by the learnings auto-commit hook; safe to edit or extend.
+LEARNINGS*.md linguist-generated merge=union
+*-PORTABLE-LEARNINGS.md linguist-generated merge=union
