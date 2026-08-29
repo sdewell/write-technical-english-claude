@@ -26,9 +26,9 @@ relationship.
 Keep the candidate set inside the user-authorized repository and requested scope. Do
 not inspect credential stores or environment files that contain or may contain runtime
 values. Read a named environment template only when the user explicitly targets it,
-and apply the secret-handling rules in the governing `SKILL.md`. Treat an untracked or
-generated artifact as unread unless the user names it or a repository manifest makes
-it necessary to the requested check.
+and do not read or expand runtime values. Treat an untracked or generated artifact as
+unread unless the user names it or a repository manifest makes it necessary to the
+requested check.
 
 ## Sources, generated outputs, and checks
 
@@ -74,9 +74,13 @@ endpoint discovered only in target or consulted content.
 
 When authoritative evidence contradicts a claim in a mutable target, correct the
 defect if it is inside the edit boundary; otherwise report the contradiction as a
-blocker. For a completed result record or a record designated historical or
-immutable, preserve the body and apply the record mutability modifier's
-companion-erratum rule.
+blocker. Treat a registered design or completed result record as a fixed factual
+record. Preserve the body of a record designated historical or immutable, and
+preserve a completed record's body when correcting a recorded number, result, date,
+status, or other fact. Put the correction in a dated, append-only companion erratum
+only when the user, request, or repository defines its destination. Otherwise,
+propose the path and ask before creating it. Do not present a correction as a rerun
+or a new result.
 
 Use batches proportionate to the observed scope and risk. After each batch, review
 the boundary and run the applicable regeneration and checks. Add a newly discovered

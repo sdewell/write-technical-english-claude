@@ -15,7 +15,7 @@ For a personal installation available across projects, run:
 
 ```bash
 mkdir -p ~/.claude/skills
-git clone --depth 1 --branch v0.1.0 \
+git clone --depth 1 --branch v0.2.0 \
   https://github.com/sdewell/write-technical-english-claude.git \
   ~/.claude/skills/write-technical-english
 ```
@@ -25,8 +25,8 @@ the skill does not appear after installation, restart Claude Code.
 
 ## Use
 
-Invoke the skill explicitly with `/write-technical-english`. Automatic invocation is
-disabled so that the skill does not change ordinary conversation or unrelated work.
+Invoke the skill explicitly with `/write-technical-english`. Its description also
+allows Claude Code to select it when a matching technical-writing task requires it.
 
 Examples:
 
@@ -55,8 +55,8 @@ The skill:
 - Protects identifiers, commands, paths, formulas, quotations, and canonical labels.
 - Preserves actors, conditions, evidence scope, uncertainty, requirement force, and
   technical meaning.
-- Applies writing profiles for reports, procedures, specifications, and code-related
-  prose.
+- Applies document or conversation register and the applicable instruction,
+  explanation, or specification mode.
 - Uses a null edit when the source has no demonstrated correctness or clarity defect.
 - Respects named passage and file boundaries.
 
@@ -66,10 +66,8 @@ broad or mixed audiences.
 
 ## Compatibility
 
-This release targets Claude Code. It uses `disable-model-invocation`, a Claude
-Code-specific field that keeps the skill explicit-only. Direct claude.ai skill uploads
-accept only the portable Agent Skills frontmatter fields, so this repository is not a
-claude.ai upload bundle.
+This release targets Claude Code. The repository root is the installable skill
+directory, and the skill uses Claude Code-compatible frontmatter.
 
 ## Limitations
 
