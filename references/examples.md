@@ -1,273 +1,198 @@
-# Examples
+# Before/after examples — simplifying without changing meaning
 
-Use these patterns as semantic examples, not as mechanical templates.
+Deliverable 6 of the research phase; repaired 2026-08-06 after the Codex-side
+review found several Afters asserting facts their Befores never contained.
+Every pair now obeys TW-53: **the After uses only facts present in the Before
+or its stated Context line.** A rewrite that needs a fact you do not have is a
+question for the user, not a sentence. Rule references are to
+the TW rules in `SKILL.md`.
 
-## Direct actions and sequence
+## 1. Burying the conclusion (TW-1, TW-5, TW-24)
 
-Before:
+*Context: the writer has already reproduced the bug with a two-request test —
+concurrent refreshes overwrite each other's token in `token_store` — and
+identified a compare-and-swap write as the fix. Knowing all that, they write:*
 
-> Prior to making the change, ensure that an examination of the current configuration has been performed and then proceed with the service restart.
+**Before**
+> After a thorough investigation of the authentication flow, taking into account the
+> various ways in which the session-refresh mechanism interacts with the underlying
+> token store, it would appear that there may potentially be a scenario in which,
+> under certain timing conditions, the refresh logic could conceivably fail to
+> persist the updated token, which might explain the behavior you observed.
 
-After:
+**After**
+> Found it: the logout bug is a race condition in session refresh. When two requests
+> refresh at the same time, the second overwrites the first token in `token_store`,
+> and the session dies. I verified this with a two-request test; the fix is a
+> compare-and-swap write.
 
-1. Examine the current configuration.
-2. Make the change.
-3. Restart the service.
+The Before is not humble — it is *miscalibrated*: verified facts written as
+speculation. The After states what the writer actually knows. Without that
+context, the After would be the opposite failure: speculation written as fact
+(TW-53).
 
-### Already ordered command block
+## 2. Elegant variation hiding one concept (TW-22)
 
-An ordered command block can already express a valid procedure when its sequence
-and acceptance condition are clear:
+**Before**
+> The `parse_config()` routine reads the settings file. The parser then validates
+> the loaded data, and the configuration subsystem finally applies the processed
+> values to the runtime.
 
-```sh
-uv run pytest tests/release/test_manifest.py -q
-npm run build:release
-node scripts/check-release.mjs dist/release.json
-```
+**After**
+> `parse_config()` reads the settings file, checks the loaded values, and applies
+> them to the runtime.
 
-The release is ready only when the test succeeds, the build completes, and the
-checker reports `status=ready`.
+One function, one name. "Routine," "parser," and "configuration subsystem" were all
+`parse_config()` wearing costumes.
 
-## One topic and stable terminology
+## 3. Nominalization and passive stacking (TW-13, TW-14, TW-15)
 
-Before:
+**Before**
+> Prior to deployment being performed, verification of the migration must have been
+> carried out, and a determination should be made as to whether a backup has been
+> created.
 
-> The cache stores responses for five minutes, while the response store reduces requests, and this data is removed when it expires.
+**After**
+> Before you deploy: run the migration test, and confirm that a backup exists.
 
-After:
+## 4. Instructions smeared into prose (TW-2, TW-6, TW-10, TW-12)
 
-> The cache stores each response for five minutes. The cache reduces repeated requests. The cache removes the response after five minutes.
+**Before**
+> You'll want to make sure the daemon isn't running before reinstalling, which can
+> be accomplished by stopping the service, after which the package can be removed
+> and the new version installed, though it's advisable to clear the cache directory
+> as well since stale entries have been known to cause issues.
 
-## Long noun stack
+**After**
+> 1. Stop the service: `systemctl stop myd`
+> 2. Remove the old package.
+> 3. Recommended: delete the cache directory. Stale entries have caused problems
+>    after upgrades.
+> 4. Install the new version.
 
-Before:
+The Before called cache clearing "advisable," so the After keeps it a
+recommendation with the Before's own reason — upgrading it to a bare mandatory
+step, or asserting a specific failure the Before never named, would change the
+requirement's force (TW-53, TW-7).
 
-> Add account access token expiration validation.
+## 5. Vague warning (TW-40, TW-41)
 
-After:
+*Context: the writer knows `cleanup.sh` deletes every row older than 30 days,
+with no dry-run flag and no undo.*
 
-> Add validation for the expiration time of the account access token.
+**Before**
+> Note: exercise caution when running the cleanup script in production environments,
+> as unintended consequences may occur.
 
-Keep `AccountAccessTokenExpirationValidation` unchanged if it is an exact class name.
+**After**
+> **Warning:** do not run `cleanup.sh` against production. It deletes every row
+> older than 30 days with no dry-run and no undo.
 
-## Normative force
+The requirement also moves out of a "Note" — notes never carry requirements (TW-42).
 
-Before:
+## 6. Jargon without definitions vs. jargon removed wrongly
 
-> Expired tokens should not be accepted by the server.
+Two failure modes. The charter wants neither.
 
-After, when the governing standard defines `MUST`:
+**Before (unexplained jargon)**
+> The regression stems from premature memoization invalidation cascading through
+> the reactive dependency graph.
 
-> The server MUST reject an expired token.
+**Wrong fix (term destroyed)**
+> The bug happens because the app forgets things too early and everything gets
+> confused downstream.
 
-## Governing vocabulary
+**After (term kept and defined — TW-23, TW-32)**
+> The bug is in memoization — the cache of already-computed values. The app clears
+> that cache too early, so components that depend on cached values recompute
+> against the changed state downstream.
 
-Governing source:
+The After defines the term and restates only what the Before claimed (premature
+invalidation, cascading effects). It does not add a fix the Before never
+stated — that would be TW-53's invented-fact failure.
 
-> Tier: Exploratory. Verdict: INCONCLUSIVE.
+## 7. Explanation that circles (TW-4, TW-3)
 
-Unsafe paraphrase:
+*Context: profiling showed records are stored in insertion order but read in key
+order, so nearly every read is a disk seek; a sort-first test (one pass, about
+2 minutes) cut indexing from 40 minutes to 3.*
 
-> This preliminary result is promising but uncertain.
+**Before**
+> The indexing step is slow because of how the data is stored. Essentially, the
+> storage layout isn't optimal for the access pattern, which is fundamentally why
+> indexing takes so long. In other words, the way records are arranged on disk
+> doesn't match how the indexer reads them, and this mismatch is at the heart of
+> the performance issue.
 
-Accurate use:
+**After**
+> Indexing is slow because records are stored in insertion order but read in key
+> order, so nearly every read is a disk seek. Sorting the records first (one pass,
+> about 2 minutes) makes the reads sequential and cuts indexing from 40 minutes to 3.
 
-> Tier: Exploratory. Verdict: INCONCLUSIVE.
+Three sentences in the before all say "layout mismatch." The after says it once and
+then adds the two things the reader actually needs: the mechanism and the fix.
 
-Keep canonical classifications and verdict labels when another active skill, standard, glossary, or schema defines them.
+## 8. Protected terms under a word cap (TW-30, TW-31)
 
-## Known actor
+**Before (rule misapplied)**
+> Call the user-auth token refresh timeout getter.
 
-Before:
+**After (identifier verbatim, prose simple)**
+> Call `getUserAuthTokenRefreshTimeoutMs()`. It returns the timeout in milliseconds.
 
-> Temporary entries are removed by `cleanup()`.
+The identifier counts as one word (STE Rule 8.6 model) and is never paraphrased —
+a paraphrase is unsearchable and, worse, might name a function that does not exist.
 
-After:
+## 9. Invented causality (TW-13, TW-53)
 
-> `cleanup()` removes temporary entries.
-
-## Unknown cause
-
-Before:
-
+**Before**
 > The payload was corrupted during transmission.
 
-Unsafe rewrite:
-
+**Wrong fix (active voice applied mechanically)**
 > Transmission corrupted the payload.
 
-Accurate revision:
+The rewrite asserts a cause the source never claimed. Active voice must not
+invent an actor.
 
-> The payload was corrupted during transmission.
+**After**
+> The payload was corrupted during transmission. The cause is unknown.
 
-Do not add a cause or state that the cause is unknown unless the source or context
-establishes that claim.
+Adopted from the Codex-side cross-review.
 
-## Bounded hypothesis
+## 10. Invented dependency between requirements (TW-7, TW-53)
 
-Before:
+*Context: the source states two separate requirements. It does not say the
+retry is conditional on a rejection.*
 
-> The same request succeeded five minutes later. The most likely explanation is a short-lived mismatch between the catalog and execution service, but the logs do not establish the cause.
+**Before**
+> The server MUST reject an expired token and the client MAY retry the request
+> once with the same `Idempotency-Key` value.
 
-Unsafe revision:
+**Wrong fix (separation invents a dependency)**
+> The server MUST reject an expired token.
+> If the server rejects an expired token, the client MAY retry the request once.
 
-> The later success does not establish the cause.
+**After**
+> The server MUST reject an expired token.
+> The client MAY retry the request once.
+> If the client retries, it SHOULD use the `Idempotency-Key` value from the
+> original request.
 
-Accurate revision:
+Splitting a compound requirement is a formatting change, not a licence to add
+logic. The wrong fix makes the retry permission conditional on a rejection the
+source never linked to it. Adapted from the Codex-side EV-6 finding.
 
-> The later success makes a short-lived mismatch between the catalog and execution service the most likely explanation, but the logs do not establish the cause.
+## 11. Binding vocabulary from a governing skill (Class 6, TW-22)
 
-Preserve a supplied hypothesis at its stated strength. Do not turn it into a fact, weaken it to an unranked possibility, or remove it in favor of a generic uncertainty statement.
+**Before**
+> The optimization results look promising but uncertain — we'll firm this up
+> later.
 
-## Modal polarity
+**After**
+> Exploratory (registered follow-up pending): the treatment shows a favorable
+> trend, but the verdict is INCONCLUSIVE under the ±0.05 margin — the difference
+> test and the equivalence test both failed.
 
-Before:
-
-> State only assumptions that affect the result. Otherwise, the agent may narrate routine assumptions.
-
-Unsafe revision:
-
-> State only assumptions that affect the result. This prevents the agent from narrating routine assumptions.
-
-Accurate revision:
-
-> State only assumptions that affect the result. Otherwise, the agent may narrate routine assumptions.
-
-Do not change a possible undesirable outcome into a guarantee that the guidance prevents it.
-
-## Evidence scope
-
-Before:
-
-> I checked the package reference but could not find a documented guarantee that retrying `submit_batch()` is idempotent.
-
-Unsafe revision:
-
-> The package reference does not guarantee that retrying `submit_batch()` is idempotent.
-
-Accurate revision:
-
-> I could not find a documented guarantee in the package reference that retrying `submit_batch()` is idempotent.
-
-Preserve the difference between an unsuccessful search and a fact about what exists or is available.
-
-## Notation contract
-
-Before:
-
-> \[
-> R = \frac{m}{N_{\text{eligible}}}
-> \]
->
-> `m` is a matching-record count. `N_{\text{eligible}}` is the count of all eligible records, not the set of records.
-
-Unsafe revision:
-
-> `N_{\text{eligible}}` is the set of all eligible records.
-
-Accurate revision:
-
-> `m` is a matching-record count. `N_{\text{eligible}}` is the count of all eligible records, not the set of records.
-
-Protect an equation together with its symbol definitions, units, domains, constraints, and undefined cases.
-
-## Conclusion and supporting evidence
-
-Before:
-
-> The trace shows that the service loaded an expired certificate. The same request succeeded after the previous certificate was restored. The expired certificate caused the failed connection.
-
-Unsafe revision:
-
-> The expired certificate caused the failed connection.
-
-Accurate revision:
-
-> The trace shows that the service loaded an expired certificate. The same request succeeded after the previous certificate was restored. The expired certificate caused the failed connection.
-
-Preserve supporting and corroborating observations. A verified conclusion does not make its evidence repetitive.
-
-## Condition before command
-
-Before:
-
-> Delete the temporary file if the checksum is valid.
-
-After:
-
-> If the checksum is valid, delete the temporary file.
-
-## Acceptance limit with its action
-
-Before:
-
-> Run the latency test.
->
-> NOTE: The p95 latency must not exceed 250 ms.
-
-After:
-
-> Run the latency test. The p95 latency must not exceed 250 ms.
-
-## Ambiguous pronoun
-
-Before:
-
-> The worker sends the record to the queue after it validates it.
-
-After, when the worker validates the record:
-
-> The worker validates the record. Then, the worker sends the record to the queue.
-
-Resolve the meaning before revising when the intended actor or object is unknown.
-
-## Exact user-interface text
-
-Before:
-
-> Select the option for creating a pull request.
-
-After:
-
-> Select `Create Pull Request`.
-
-## Domain term at first use
-
-Before:
-
-> Enable backpressure.
-
-After:
-
-> Enable backpressure, a flow-control mechanism that limits incoming work.
-
-## Hazard structure
-
-Context: The project defines `DATA LOSS` for irreversible data deletion. The command permanently deletes customer records from the production database.
-
-Before:
-
-> NOTE: Be careful with this command on production.
-
-After:
-
-> DATA LOSS: Do not run this command on the production database. The command permanently deletes customer records.
-
-## Historical correction
-
-Preserve the completed record and create a dated companion erratum when audit
-evidence shows that a historical statement was false. Do not edit the original
-record body. For example, the companion erratum can contain:
-
-> 2026-08-22 erratum: The record states that the run used 10 seeds. Audit
-> evidence shows that the run used 8 seeds. The original record remains unchanged.
-
-## Conversational explanation
-
-Before:
-
-> Serialization is a process whereby an object is subjected to conversion into a format that is able to be stored or transmitted.
-
-After:
-
-> Serialization converts an object into a format that a system can store or transmit.
+"Exploratory" and "INCONCLUSIVE" are codified terms from the
+`experiment-design-and-validation` skill. They price what the claim may do;
+"promising but uncertain" is a paraphrase that erases the classification.
