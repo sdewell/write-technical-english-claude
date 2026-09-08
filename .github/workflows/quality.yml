@@ -27,7 +27,10 @@ jobs:
 
           # The exact file set the canonical render produces for this platform,
           # sorted with LC_ALL=C. ".gitattributes" and ".github" are the two
-          # paths the canonical verifier also treats as repository-local.
+          # paths the canonical verifier also treats as repository-local, along
+          # with the repo's own framework docs (CLAUDE.md and its siblings,
+          # docs/) — repo-level meta-documentation, not part of the installed
+          # skill package.
           expected_files='./LICENSE
           ./README.md
           ./SKILL.md
@@ -93,9 +96,16 @@ jobs:
             fail "public .gitattributes can transform archived content"
           fi
 
-          # 2. The published file set must match the render exactly.
+          # 2. The published file set must match the render exactly. The
+          #    repo's own framework docs (CLAUDE.md and siblings, docs/) are
+          #    repository-local meta-documentation, excluded the same way
+          #    .gitattributes and .github are.
           actual_files=$(cd "$snapshot" && find . \( -type f -o -type l \) \
-            ! -name '.gitattributes' ! -path './.github/*' -print | LC_ALL=C sort)
+            ! -name '.gitattributes' ! -path './.github/*' \
+            ! -path './docs/*' \
+            ! -name 'CLAUDE.md' ! -name 'ARCHITECTURE.md' ! -name 'AGENTS.md' \
+            ! -name 'CONTEXT.md' ! -name 'DECISIONS.md' ! -name 'PLAN.md' \
+            -print | LC_ALL=C sort)
           if [[ "$actual_files" != "$expected_files" ]]; then
             echo "--- expected ---" >&2
             printf '%s\n' "$expected_files" >&2
