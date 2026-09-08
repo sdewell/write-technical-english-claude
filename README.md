@@ -1,5 +1,7 @@
 # Write Technical English for Claude Code
 
+> **Purpose:** what write-technical-english-claude is, how to install it, how to use it. **Use:** read this first when new here; update it in the same PR as any change to install or usage. Agent conventions are in CLAUDE.md.
+
 `write-technical-english` is a Claude Code skill for consolidating terminology and
 replacing unnecessary jargon in technical prose. It favors consistent terminology
 and direct language while preserving technical meaning, exact identifiers,
