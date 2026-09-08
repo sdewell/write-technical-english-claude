@@ -1,0 +1,136 @@
+name: quality
+
+# This repository is a rendered distribution, not a source. The skill body is
+# edited in a private canonical repository and rendered here. The canonical
+# repository holds the only check that can compare the two (it needs both
+# checkouts), so it cannot run on GitHub without credentials for a private
+# repository. This workflow enforces the subset of that check's invariants that
+# a public checkout can verify on its own: the published file set, the file
+# modes, the skill frontmatter, and the absence of private source references.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  distribution-integrity:
+    name: distribution integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check published distribution integrity
+        run: |
+          set -euo pipefail
+
+          # The exact file set the canonical render produces for this platform,
+          # sorted with LC_ALL=C. ".gitattributes" and ".github" are the two
+          # paths the canonical verifier also treats as repository-local.
+          expected_files='./LICENSE
+          ./README.md
+          ./SKILL.md
+          ./references/examples.md
+          ./references/exception-policy.md
+          ./references/repository-revisions.md
+          ./references/vocabulary.md'
+
+          workflow_path=.github/workflows/quality.yml
+
+          fail() {
+            echo "error: $1" >&2
+            exit 1
+          }
+
+          # Read the frontmatter keys of a markdown file. Exits non-zero when
+          # line 1 is not "---", when the frontmatter is never closed, or when
+          # nothing follows it.
+          frontmatter_keys() {
+            awk '
+              NR == 1 {
+                sub(/\r$/, "")
+                if ($0 != "---") {
+                  exit 2
+                }
+                in_frontmatter = 1
+                next
+              }
+              in_frontmatter {
+                sub(/\r$/, "")
+                if ($0 == "---") {
+                  in_frontmatter = 0
+                  closed_frontmatter = 1
+                  next
+                }
+                if ($0 ~ /^[A-Za-z0-9_-]+:/) {
+                  key = $0
+                  sub(/:.*/, "", key)
+                  print key
+                }
+                next
+              }
+              closed_frontmatter && $0 !~ /^[[:space:]]*$/ {
+                body_content = 1
+              }
+              END {
+                if (!closed_frontmatter || !body_content) {
+                  exit 3
+                }
+              }
+            ' "$1" | LC_ALL=C sort
+          }
+
+          # Check the committed tree as "git archive" produces it, so that a
+          # .gitattributes filter cannot hide content from these checks.
+          snapshot=$(mktemp -d)
+          git archive HEAD | tar -x -C "$snapshot"
+
+          # 1. .gitattributes must not transform or drop archived content.
+          attributes=$(git show HEAD:.gitattributes 2>/dev/null || true)
+          if printf '%s\n' "$attributes" |
+            grep -E -q '(^|[[:space:]])(export-ignore|export-subst|filter=)'; then
+            fail "public .gitattributes can transform archived content"
+          fi
+
+          # 2. The published file set must match the render exactly.
+          actual_files=$(cd "$snapshot" && find . \( -type f -o -type l \) \
+            ! -name '.gitattributes' ! -path './.github/*' -print | LC_ALL=C sort)
+          if [[ "$actual_files" != "$expected_files" ]]; then
+            echo "--- expected ---" >&2
+            printf '%s\n' "$expected_files" >&2
+            echo "--- actual ---" >&2
+            printf '%s\n' "$actual_files" >&2
+            fail "published file set differs from the canonical render"
+          fi
+
+          # 3. A published distribution carries no symlinks and no executables.
+          [[ -z "$(find "$snapshot" -type l -print -quit)" ]] ||
+            fail "public distribution contains a symlink"
+          [[ -z "$(find "$snapshot" -type f -perm -111 -print -quit)" ]] ||
+            fail "public distribution contains an executable file"
+
+          # 4. SKILL.md frontmatter must stay loadable by Claude Code.
+          if ! skill_keys=$(frontmatter_keys "$snapshot/SKILL.md"); then
+            fail "SKILL.md has no closed frontmatter block followed by a body"
+          fi
+          [[ "$skill_keys" == $'compatibility\ndescription\nlicense\nname' ]] ||
+            fail "unexpected SKILL.md frontmatter keys: $(printf '%s' "$skill_keys" | tr '\n' ' ')"
+          grep -qx 'name: write-technical-english' "$snapshot/SKILL.md" ||
+            fail "unexpected skill name in SKILL.md"
+          if grep -q '^disable-model-invocation:' "$snapshot/SKILL.md"; then
+            fail "SKILL.md disables model invocation"
+          fi
+
+          # 5. No private or unpackaged source reference reaches the public
+          #    repository. This workflow file states the patterns, so it is the
+          #    one file excluded from its own scan; review covers it instead.
+          leaks=$(find "$snapshot" -type f ! -path "$snapshot/$workflow_path" -print0 |
+            xargs -0 grep -E -n -e '/Users/' -e '~/Code' \
+              -e 'ASD-STE100-(claude|codex)' -e 'draft-standard' || true)
+          if [[ -n "$leaks" ]]; then
+            printf '%s\n' "$leaks" >&2
+            fail "public file contains a private or unpackaged source reference"
+          fi
+
+          echo "published distribution is intact"
