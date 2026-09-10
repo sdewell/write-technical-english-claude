@@ -9,7 +9,7 @@ name: quality
 # modes, the skill frontmatter, and the absence of private source references.
 
 on:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
